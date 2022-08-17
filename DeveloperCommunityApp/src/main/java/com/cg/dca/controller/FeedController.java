@@ -1,7 +1,5 @@
 package com.cg.dca.controller;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +7,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +23,7 @@ import com.cg.dca.exception.UnknownFeedException;
 import com.cg.dca.repository.IFeedRepository;
 import com.cg.dca.service.IFeedService;
 
+
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/api/v1")
@@ -33,46 +31,66 @@ public class FeedController {
 
 	@Autowired
 	private IFeedRepository feedRepository;
-	private IFeedService feedService;
+	
+	@Autowired
+	IFeedService feedService;
 	
 	// Get Feed
 	@GetMapping("/feeds")
-	public List<Feed> fetchFeed(){
+	public List<Feed> getAllDeveloper(){
 		return feedRepository.findAll();
 	}
 	
 	// Get Feed By Topic
 	@GetMapping("/feeds/topic")
-	public ResponseEntity<List<Feed>> fetchFeedsByTopic(@RequestParam String topic) {
-		return new ResponseEntity<List<Feed>>(feedService.getFeedByTopic(topic), HttpStatus.OK);
+	public ResponseEntity<List<Feed>> fetchFeedsByTopic(@RequestParam String topic) throws UnknownFeedException {
+		return new ResponseEntity<List<Feed>>(feedRepository.findByTopic(topic), HttpStatus.OK);
 	}
 	
-	// Get Feed By Keyword
-		@GetMapping("/feeds/keyword")
-		public ResponseEntity<List<Feed>> fetchFeedsByKeyword(@RequestParam String keyword) {
-			return new ResponseEntity<List<Feed>>(feedService.getFeedByKeyword(keyword), HttpStatus.OK);
-		}
+	@PostMapping("/feeds")
+	public Feed createResponse(@RequestBody Feed feedData) {
+		return feedRepository.save(feedData);
+	}
 	
-	// Save Feed
-		@PostMapping("/feeds")
-		public Feed saveFeed(@RequestBody Feed feed) {
-			return feedRepository.save(feed);
-		}
-		
+	// Get Feed By Id
+	 	@GetMapping("/getFeed/{id}")
+	 	public ResponseEntity<Feed> fetchFeedById(@PathVariable(value = "id") Long feedId) throws UnknownFeedException {
+	 		Feed feed = feedRepository.findById(feedId)
+	 				.orElseThrow(() -> new UnknownFeedException("Feed not found for this id :: " + feedId));
+	 		return ResponseEntity.ok().body(feed);
+	 	}
+	
 		// Update Feed
 		@PutMapping("/feeds/{id}")
 		public ResponseEntity<Feed> updateFeed(@PathVariable(value = "id") Long feedId,
-		@RequestBody Feed responseDetails) throws UnknownFeedException{
+		@RequestBody Feed feedDetails) throws UnknownFeedException{
 			
 			Feed feed = feedRepository.findById(feedId)
 					.orElseThrow(() -> new UnknownFeedException("Feed not found for this id :: " + feedId));
 			
-			feed.setQuery(responseDetails.getQuery());
-			feed.setFeedDate(responseDetails.getFeedDate());
-			feed.setFeedTime(responseDetails.getFeedTime());
-			feed.setTopic(responseDetails.getTopic());
+			feed.setQuery(feedDetails.getQuery());
+			feed.setFeedDate(feedDetails.getFeedDate());
+			feed.setFeedTime(feedDetails.getFeedTime());
+			feed.setTopic(feedDetails.getTopic());
+			feed.setRelevance(feedDetails.getRelevance());
 			final Feed updatedFeed  = feedRepository.save(feed);
 			return ResponseEntity.ok(updatedFeed);
+		}
+		
+		@GetMapping("feeds/{id}/like")
+		public ResponseEntity<Feed> likeFeed(@PathVariable(value = "id") Long feedId) throws UnknownFeedException{
+			Feed feed = feedRepository.findById(feedId)
+					.orElseThrow(() -> new UnknownFeedException("Feed not found for this id :: " + feedId));
+			
+			int count = 0;
+			count = feed.getRelevance() + 1;
+			feed.setQuery(feed.getQuery());
+			feed.setFeedDate(feed.getFeedDate());
+			feed.setFeedTime(feed.getFeedTime());
+			feed.setTopic(feed.getTopic());
+			feed.setRelevance(count);
+			final Feed likedFeed  = feedRepository.save(feed);
+			return ResponseEntity.ok(likedFeed);
 		}
 		
 		// Delete Feed

@@ -1,13 +1,8 @@
 package com.cg.dca.service;
 
-import java.util.List;
+import org.springframework.stereotype.Service;
 
-import com.cg.dca.entity.Feed;
-
-public interface IFeedService {
-	
-	List<Feed> getFeedByTopic(String topic);
-
-	List<Feed> getFeedByKeyword(String keyword);
+@Service
+public class IFeedService {
 
 }

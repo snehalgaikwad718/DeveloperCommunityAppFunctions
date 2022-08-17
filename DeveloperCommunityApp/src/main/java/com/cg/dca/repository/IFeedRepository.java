@@ -10,7 +10,6 @@ import com.cg.dca.entity.Feed;
 @Repository
 public interface IFeedRepository extends JpaRepository<Feed, Long>{
 
-//	List<Feed> fetchFeedByTopic(String topic);
-	
+	List<Feed> findByTopic(String topic);
 
 }
